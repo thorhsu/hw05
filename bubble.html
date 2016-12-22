@@ -1,0 +1,32 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Untitled Document</title>
+</head>
+<script src="https://d3js.org/d3.v3.js"></script>
+<body>
+
+
+
+</body>
+<script>
+var arr = [
+  {value: 1, char: "A", num: 1}, 
+  {value: 2, char: "B", num: 1}, 
+  {value: 3, char: "B", num: 2}, 
+  {value: 4, char: "C", num: 1}, 
+  {value: 5, char: "C", num: 2},
+  {value: 6, char: "C", num: 3},
+];
+
+var nested_a = d3.nest()
+                 .key(function(d){
+                     return d.char;
+                 }).rollup(function(d){
+                    return d.length;
+                 }).entries(arr);
+
+console.log(nested_a);
+</script>
+</html>

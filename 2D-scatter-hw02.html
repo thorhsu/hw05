@@ -1,0 +1,231 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Untitled Document</title>
+    <script src="https://d3js.org/d3.v3.js"></script>
+    <style>
+        body {
+            background: #eee;
+        }
+        
+        .axis path,
+        .axis line {
+            fill: none;
+            stroke: black;
+            shape-rendering: auto;
+        }
+        
+        .axis text {
+            font-size: 15px;
+            fill: black;
+        }
+        
+        #tooltip {
+            position: absolute;
+            left:20px;
+            top:100px;
+            background: #fff;
+            width: 150px;
+            height: auto;
+            padding: 0px 10px;
+            border-radius: 10px;
+            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3);
+        }
+        #tooltip.hidden{
+           display: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="tooltip" class="hidden">
+        <p><strong id="city">Hello</strong></p>
+        <p id="industry">tool2p</p>
+    </div>
+    <script>
+        // 1. 定義width, height, padding, letterList變數
+        var w = 900;
+        var h = 600;
+        var padding = 100;
+        var letterList = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "M", "N", "O", "P", "Q", "T", "U", "V", "W", "X", "Z"];
+
+        //2. 建立svg()畫布環境
+
+        svg();
+        //var dataSet;
+        //3. 用d3讀取csv
+        d3.csv("invoice.csv", function (dataSet) {
+            //this.dataSet = dataSet;
+            bind(dataSet);
+            render(dataSet);
+            btnList(dataSet);
+        });
+
+
+        function svg() {
+            d3.select("body").append("svg").attr({
+                width: w,
+                height: h
+            });
+            d3.select("svg").append("g").append("rect").attr({
+                width: "100%",
+                height: "100%",
+                fill: "white"
+            });
+            d3.select("svg").append("g").attr("id", "axisY");
+            d3.select("svg").append("g").attr("id", "axisX");
+        }
+
+        //4. 建立bind()
+        function bind(dataSet) {
+            var selection = d3.select("svg")
+                .selectAll("circle")
+                .data(dataSet);
+
+            selection.enter().append("circle");
+            selection.exit().remove();
+        }
+
+        function render(dataSet) {
+            //5. 定義xScale,yScale,rScale, fScale比例尺(range目的在決定在svg上位置)
+
+            var xScale = d3.time.scale()
+                .domain([d3.min(dataSet, function (d) {
+                    return new Date(d.date)
+                }), d3.max(dataSet, function (d) {
+                    return new Date(d.date)
+                })])
+                .range([padding, w - padding]);
+
+            //        var xScale = d3.time.scale()
+            //                    .domain([new Date("2013-01-01"), new Date("2016-06-01")])
+            //                    .range([padding, w - padding]);
+
+            var yScale = d3.scale.linear()
+                .domain([0, d3.max(dataSet, function (d) {
+                    return +d.number
+                })])
+                .range([h - padding, padding]);
+            var rScale = d3.scale.linear()
+                .domain([d3.min(dataSet, function (d) {
+                    return +d.amount
+                }), d3.max(dataSet, function (d) {
+                    return +d.amount
+                })])
+                .range([5, 30]);
+            var fScale = d3.scale.category20();
+
+            var xAxis = d3.svg.axis().scale(xScale) //告知x軸用xScale
+                .orient('bottom')
+                //.ticks(5)//只有五個刻度
+            ;
+
+            var yAxis = d3.svg.axis().scale(yScale) //告知y軸用yScale
+                .orient('left');
+            //設定X軸線
+            //            d3.select("svg").append("g")
+            d3.select("g#axisX")
+                .attr("class", "axis")
+                .attr("transform", 'translate(0,' + (h - padding + 15) + ')')
+                .call(xAxis);
+
+            //設定Y軸線
+            d3.select("g#axisY")
+                .attr("class", "axis")
+                .attr("transform", 'translate(' + (padding - 15) + ', 0)')
+                .call(yAxis);
+
+
+            //6. 建立render()繪圖
+            d3.selectAll("circle")
+                .attr({
+                    cx: function (d) {
+                        return xScale(new Date(d.date));
+                    },
+                    cy: function (d) {
+                        return yScale(+d.number);
+                    },
+                    r: function (d) {
+                        return rScale(+d.amount);
+                    },
+                    //填顏色
+                    fill: function (d) {
+                        return fScale(d.cid);
+                    }
+                })
+//                .append("title").text(function (d) {
+//                    return d.city + "\r\n" + d.industry + "\r\n" + d.amount;
+//                })
+                .on("mouseover",function(d){
+                   var cx = d3.select(this).attr("cx");
+                   var cy = d3.select(this).attr("cy");
+                   var tooltip = d3.select("#tooltip")
+                   .style({
+                      left: +cx + 15+"px",
+                      top: +cy + 15+"px"
+                    });
+                   //替換tooltip內容(選擇其id後,修改內容)
+                   d3.select("#tooltip").classed("hidden",false);
+                   d3.select("#tooltip #city").text(d.city);
+                   d3.select("#tooltip #industry").text(d.industry);
+                }).on("mouseout",function(d){
+                    d3.select("#tooltip").classed("hidden",true);
+                })
+                ;
+        }
+
+        function btnList(dataSet) {
+            var industryArr = dataSet.map(function (d) {
+                return d.industry;
+            });
+            var uniqueIndustryArr = unique(industryArr);
+            var filterIndustryArr = uniqueIndustryArr.filter(function (d) {
+                return d != "";
+            });
+            
+            //增加下拉選單
+            var selection = d3.select("body").append("select").selectAll("option").data(filterIndustryArr);
+            selection.enter().append("option").attr({
+                value: function (d) {
+                    return d;
+                }
+            }).text(
+                function (d) {
+                    return d;
+                }
+            )
+            d3.select("select").on('change', function () {
+                console.log(123);
+                var value = d3.select("select").property("value");
+                console.log(value);
+                update(value);
+            });
+            selection.exit().remove();
+            //           d3.select("body").append("div").text(filterIndustryArr.join("/"));
+            function update(industryNm) {
+                var newDataSet = dataSet.filter(function (d) {
+                    return d.industry === industryNm;
+                });
+                bind(newDataSet);
+                render(newDataSet);
+            }
+        }
+
+        function unique(array) {
+            var n = [];
+            for (var i = 0; i < array.length; i++) {
+                //     if(!n.includes(arr1[i]))
+                if (n.indexOf(array[i]) === -1)
+                    n.push(array[i]);
+            }
+            //去看每個array，如果沒出現過就加到n中      
+            return n;
+        }
+    </script>
+
+</body>
+
+</html>

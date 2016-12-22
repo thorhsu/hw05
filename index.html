@@ -1,0 +1,63 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Untitled Document</title>
+</head>
+
+<body>
+
+
+
+</body>
+<script>
+    var arr1 = ["A", "B", "A", "C"];
+    var uniArr = unique(arr1);
+
+    console.log("arr1",uniArr);
+
+    
+    var arr2 = [
+        {
+            city: "台北市",
+            cid: "A"
+        },
+        {
+            city: "台中市",
+            cid: "B"
+        },
+        {
+            city: "台北市",
+            cid: "A"
+        },
+        {
+            city: "基隆市",
+            cid: "C"
+        }
+
+   ];
+   var arr3 = arr2.map(function(d){
+       return d.cid;
+   });
+   var arr4 = arr3.filter(function(d){
+       return d!="A";
+   });
+   console.log("after", arr3); 
+   var uniArr2 = unique(arr3);
+   console.log("uniArr2", uniArr2);
+   console.log("arr4", arr4);
+   function unique(array) {
+        var n = [];
+        for (var i = 0; i < array.length; i++) {
+            //     if(!n.includes(arr1[i]))
+            if (n.indexOf(array[i]) === -1)
+                n.push(array[i]);
+        }
+        //去看每個array，如果沒出現過就加到n中      
+        return n;
+    }
+
+</script>
+
+</html>
